@@ -389,7 +389,7 @@ static void ubloxSendMessage(const uint8_t *data, uint8_t len, bool skipAck);
 
 static void gpsSetState(gpsState_e state)
 {
-    gpsData.lastNavMessage = gpsData.now;
+    gpsData.lastSentMessage = gpsData.lastNavMessage = gpsData.now;
     sensorsClear(SENSOR_GPS);
     gpsData.state = state;
     gpsData.state_position = 0;
@@ -574,6 +574,14 @@ static void ubloxSendMessage(const uint8_t *data, uint8_t len, bool skipAck)
     gpsData.ackWaitingMsgId = data[3]; //save message id for ACK
     gpsData.ackTimeoutCounter = 0;
     gpsData.ackState = skipAck ? UBLOX_ACK_GOT_ACK : UBLOX_ACK_WAITING;
+/* Try this next, then remove lastSentMessage reset from gpsSetState( ).
+    if (skipAck) {
+        gpsData.ackState = UBLOX_ACK_GOT_ACK;
+    } else {
+        gpsData.lastSentMessage = millis();
+        gpsData.ackState = UBLOX_ACK_WAITING;
+    }
+*/
 }
 
 static void ubloxSendClassMessage(ubxProtocolBytes_e class_id, ubxProtocolBytes_e msg_id, uint16_t length)
@@ -1314,8 +1322,10 @@ void gpsInitUblox(void)
             case UBLOX_ACK_IDLE:
                 break;
             case UBLOX_ACK_WAITING:
-                if (cmp32(gpsData.now, gpsData.lastNavMessage) > UBLOX_ACK_TIMEOUT_MS){
-                    // give up, treat it like receiving ack
+                if (cmp32(gpsData.now, gpsData.lastSentMessage) > UBLOX_ACK_TIMEOUT_MS) {
+                    // In the GPS developer community, there are multiple reports that modules may not correctly reply with ACK/NAKs all the time.
+                    // We should validate that in our application, do we really see missing ACK/NAKs? Or did this happen because of prior dropped byte problems that are now fixed?
+                    // For now, rather than getting into a loop and starting reconnect over, we ignore the timeout and assume the command succeeded.
                     gpsData.ackState = UBLOX_ACK_GOT_ACK;
                 }
                 break;
