@@ -250,8 +250,6 @@ static void taskGpsRescue(timeUs_t currentTimeUs)
 
     if (gpsRescueIsConfigured()) {
         gpsRescueUpdate();
-    } else {
-        schedulerIgnoreTaskStateTime();
     }
 }
 #endif
