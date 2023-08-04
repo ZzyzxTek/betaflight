@@ -276,13 +276,14 @@ typedef struct gpsData_s {
     uint32_t errors;                // gps error counter - crc error/lost of data/sync etc..
     uint32_t timeouts;
     uint32_t lastNavMessage;        // time of last valid GPS speed and position data
-
+    uint32_t now;
     uint32_t state_position;        // incremental variable for loops
     uint32_t state_ts;              // timestamp for last state_position increment
     uint8_t state;                  // GPS thread state. Used for detecting cable disconnects and configuring attached devices
     uint8_t baudrateIndex;          // index into auto-detecting or current baudrate
 
     uint8_t ackWaitingMsgId;        // Message id when waiting for ACK
+    uint8_t timeoutCounter;         // General timeout counter
     uint8_t ackTimeoutCounter;      // Ack timeout counter
     ubloxAckState_e ackState;       // Ack State
     uint8_t updateRateHz;
@@ -354,7 +355,7 @@ extern uint8_t GPS_svinfo_cno[GPS_SV_MAXSATS_M8N];      // Carrier to Noise Rati
 #define GPS_DBHZ_MAX 55 // used only in dashboard / oled display
 
 #define TASK_GPS_RATE       100     // default update rate of GPS task
-#define TASK_GPS_RATE_FAST  1000    // update rate of GPS task while Rx buffer is not empty
+#define TASK_GPS_RATE_FAST  500    // update rate of GPS task while Rx buffer is not empty
 
 #ifdef USE_GPS_UBLOX
 ubloxVersion_e ubloxParseVersion(const uint32_t version);
